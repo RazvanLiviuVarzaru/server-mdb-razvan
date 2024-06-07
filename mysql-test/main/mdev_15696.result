@@ -1,0 +1,7 @@
+create server srv foreign data wrapper mysql options
+(host "localhost", port 12345, wait_what "it's all good");
+show create server srv;
+Server	Create Server
+srv	CREATE SERVER `srv` FOREIGN DATA WRAPPER mysql OPTIONS (host 'localhost', port 12345, wait_what 'it''s all good');
+show create server nonexist;
+ERROR HY000: The foreign server name you are trying to reference does not exist. Data source error:  nonexist

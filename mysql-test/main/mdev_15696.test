@@ -1,0 +1,7 @@
+# create or replace sequence t1 engine=myisam;
+# show create database test;
+create server srv foreign data wrapper mysql options
+(host "localhost", port 12345, wait_what "it's all good");
+show create server srv;
+--error ER_FOREIGN_SERVER_DOESNT_EXIST
+show create server nonexist;
