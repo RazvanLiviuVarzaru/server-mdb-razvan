@@ -4281,8 +4281,6 @@ int subselect_uniquesubquery_engine::exec()
       The case when all values in left_expr are NULL is handled by
       Item_in_optimizer::val_int().
     */
-    if (tracker)
-      tracker->increment_table_scan_loops();
     if (in_subs->is_top_level_item())
       DBUG_RETURN(1); /* notify caller to call reset() and set NULL value. */
     else
@@ -4303,8 +4301,6 @@ int subselect_uniquesubquery_engine::exec()
     DBUG_RETURN(true);
   }
 
-  if (tracker)
-    tracker->increment_index_lookup_loops();
   error= table->file->ha_index_read_map(table->record[0],
                                         tab->ref.key_buff,
                                         make_prev_keypart_map(tab->
@@ -6341,7 +6337,7 @@ int subselect_partial_match_engine::exec()
   if (tmp_table->file->inited)
     tmp_table->file->ha_index_end();
 
-  tracker->increment_partial_match_loops();
+  tracker->increment_partial_matches();
   if (partial_match())
   {
     /* The result of IN is UNKNOWN. */
@@ -7011,10 +7007,7 @@ void Item_subselect::init_expr_cache_tracker(THD *thd)
 void Subq_materialization_tracker::track_partial_merge_keys(
     Ordered_key **merge_keys, uint merge_keys_count)
 {
-  partial_match_merge_key_sizes.resize(merge_keys_count, 0);
+  partial_match_array_sizes.resize(merge_keys_count, 0);
   for (uint i= 0; i < merge_keys_count; i++)
-  {
-    partial_match_merge_key_sizes[i]=
-        merge_keys[i]->get_key_buff_elements();
-  }
+    partial_match_array_sizes[i]= merge_keys[i]->get_key_buff_elements();
 }

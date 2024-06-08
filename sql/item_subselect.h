@@ -1574,11 +1574,10 @@ public:
   Subq_materialization_tracker(MEM_ROOT *mem_root)
     : exec_strategy(Strategy::UNDEFINED),
       partial_match_buffer_size(0),
-      partial_match_merge_key_sizes(mem_root),
+      partial_match_array_sizes(mem_root),
       loops_count(0),
-      table_scan_loops_count(0),
-      index_lookup_loops_count(0),
-      partial_match_loops_count(0)
+      index_lookups_count(0),
+      partial_matches_count(0)
   {}
 
   void track_partial_merge_keys(Ordered_key **merge_keys,
@@ -1593,9 +1592,9 @@ public:
       case Strategy::COMPLETE_MATCH:
         return "index_lookup";
       case Strategy::PARTIAL_MATCH_MERGE:
-        return "partial_match_merge";
+        return "index_lookup;array merge for partial match";
       case Strategy::PARTIAL_MATCH_SCAN:
-        return "partial_match_scan";
+        return "index_lookup;full scan for partial match";
       default:
         return "unsupported";
     }
@@ -1621,14 +1620,14 @@ public:
     partial_match_buffer_size= sz;
   }
 
-  size_t get_partial_match_merge_keys_count() const
+  size_t get_partial_match_arrays_count() const
   {
-    return partial_match_merge_key_sizes.elements();
+    return partial_match_array_sizes.elements();
   }
 
-  ha_rows get_partial_match_merge_key_size(size_t idx) const
+  ha_rows get_partial_match_array_size(size_t idx) const
   {
-    return partial_match_merge_key_sizes[idx];
+    return partial_match_array_sizes[idx];
   }
 
   void increment_loops_count()
@@ -1646,59 +1645,43 @@ public:
     return loops_count;
   }
 
-  void increment_table_scan_loops()
-  {
-    table_scan_loops_count++;
-  }
-
-  bool has_table_scan_loops()
-  {
-    return table_scan_loops_count != 0;
-  }
-
-  ulonglong get_table_scan_loops_count() const
-  {
-    return table_scan_loops_count;
-  }
-
   void increment_index_lookup_loops()
   {
-    index_lookup_loops_count++;
+    index_lookups_count++;
   }
 
   bool has_index_lookup_loops()
   {
-    return index_lookup_loops_count != 0;
+    return index_lookups_count != 0;
   }
 
   ulonglong get_index_lookup_loops_count() const
   {
-    return index_lookup_loops_count;
+    return index_lookups_count;
   }
 
-  void increment_partial_match_loops()
+  void increment_partial_matches()
   {
-    partial_match_loops_count++;
+    partial_matches_count++;
   }
 
-  bool has_partial_match_loops()
+  bool has_partial_matches()
   {
-    return partial_match_loops_count != 0;
+    return partial_matches_count != 0;
   }
 
-  ulonglong get_partial_match_loops_count() const
+  ulonglong get_partial_matches_count() const
   {
-    return partial_match_loops_count;
+    return partial_matches_count;
   }
 
 private:
   Strategy exec_strategy;
   ulonglong partial_match_buffer_size;
-  Dynamic_array<ha_rows> partial_match_merge_key_sizes;
+  Dynamic_array<ha_rows> partial_match_array_sizes;
   ulonglong loops_count;
-  ulonglong table_scan_loops_count;
-  ulonglong index_lookup_loops_count;
-  ulonglong partial_match_loops_count;
+  ulonglong index_lookups_count;
+  ulonglong partial_matches_count;
 };
 
 #endif /* ITEM_SUBSELECT_INCLUDED */

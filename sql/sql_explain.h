@@ -117,7 +117,7 @@ public:
   Expression_cache_tracker* cache_tracker;
 
   /**
-    This tracker is not NULL if the node explains a materialized subquery.
+    This member is not NULL if the node explains a materialized subquery.
     Otherwise it is NULL and not used
   */
   Explain_subq_materialization* subq_materialization;
