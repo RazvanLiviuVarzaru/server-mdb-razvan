@@ -1,12 +1,12 @@
 #
 # Testing errors
 #
-CREATE TABLE t1 (a INT NOT NULL) ENGINE=CONNECT CHARSET=latin1 TABLE_TYPE=DBF FILE_NAME='t1.dbf';
+CREATE TABLE t1 (a INT NOT NULL) ENGINE=CONNECT TABLE_TYPE=DBF FILE_NAME='t1.dbf';
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` int(11) NOT NULL
-) ENGINE=CONNECT DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci `TABLE_TYPE`=DBF `FILE_NAME`='t1.dbf'
+) ENGINE=CONNECT DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci `TABLE_TYPE`=DBF `FILE_NAME`='t1.dbf'
 SELECT * FROM t1;
 a
 Warnings:
@@ -57,12 +57,12 @@ END//
 #
 # Testing READONLY tables
 #
-CREATE TABLE t1 (a INT NOT NULL) ENGINE=CONNECT CHARSET=latin1 TABLE_TYPE=DBF FILE_NAME='t1.dbf';
+CREATE TABLE t1 (a INT NOT NULL) ENGINE=CONNECT TABLE_TYPE=DBF FILE_NAME='t1.dbf';
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` int(11) NOT NULL
-) ENGINE=CONNECT DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci `TABLE_TYPE`=DBF `FILE_NAME`='t1.dbf'
+) ENGINE=CONNECT DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci `TABLE_TYPE`=DBF `FILE_NAME`='t1.dbf'
 INSERT INTO t1 VALUES (10),(20);
 CALL dbf_header('MYSQLD_DATADIR/test/t1.dbf');
 --------	--------
@@ -91,7 +91,7 @@ SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` int(11) NOT NULL
-) ENGINE=CONNECT DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci `TABLE_TYPE`=DBF `FILE_NAME`='t1.dbf' `READONLY`=Yes
+) ENGINE=CONNECT DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci `TABLE_TYPE`=DBF `FILE_NAME`='t1.dbf' `READONLY`=Yes
 INSERT INTO t1 VALUES (30);
 ERROR HY000: Table 't1' is read only
 UPDATE t1 SET a=30 WHERE a=10;
@@ -105,7 +105,7 @@ SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` int(11) NOT NULL
-) ENGINE=CONNECT DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci `TABLE_TYPE`=DBF `FILE_NAME`='t1.dbf' `READONLY`=NO
+) ENGINE=CONNECT DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci `TABLE_TYPE`=DBF `FILE_NAME`='t1.dbf' `READONLY`=NO
 INSERT INTO t1 VALUES (30);
 CALL dbf_header('MYSQLD_DATADIR/test/t1.dbf');
 --------	--------
@@ -139,7 +139,7 @@ CREATE TABLE t1
 a int(11) NOT NULL,
 b char(10) NOT NULL,
 c varchar(10) NOT NULL
-) ENGINE=CONNECT CHARSET=latin1 table_type=DBF file_name='t1.dbf';
+) ENGINE=CONNECT table_type=DBF file_name='t1.dbf';
 INSERT INTO t1 VALUES (1,'1','1');
 INSERT INTO t1 VALUES (2,'2','2');
 SELECT * FROM t1;
@@ -150,34 +150,34 @@ DROP TABLE t1;
 #
 # Testing that table options in lower case and mixed case are understood:
 #
-CREATE TABLE t1 (a INT NOT NULL) ENGINE=CONNECT CHARSET=latin1 table_type=dbf file_name='t1.dbf';
+CREATE TABLE t1 (a INT NOT NULL) ENGINE=CONNECT table_type=dbf file_name='t1.dbf';
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` int(11) NOT NULL
-) ENGINE=CONNECT DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci `table_type`=dbf `file_name`='t1.dbf'
+) ENGINE=CONNECT DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci `table_type`=dbf `file_name`='t1.dbf'
 INSERT INTO t1 VALUES (10);
 SELECT * FROM t1;
 a
 10
 DROP TABLE t1;
-CREATE TABLE t1 (a CHAR(10) NOT NULL) ENGINE=CONNECT CHARSET=latin1  Table_Type=dbf File_Name='t1.dbf';
+CREATE TABLE t1 (a CHAR(10) NOT NULL) ENGINE=CONNECT Table_Type=dbf File_Name='t1.dbf';
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` char(10) NOT NULL
-) ENGINE=CONNECT DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci `Table_Type`=dbf `File_Name`='t1.dbf'
+) ENGINE=CONNECT DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci `Table_Type`=dbf `File_Name`='t1.dbf'
 INSERT INTO t1 VALUES ('test');
 SELECT * FROM t1;
 a
 test
 CALL dbf_header('MYSQLD_DATADIR/test/t1.dbf');
 --------	--------
-FileSize	78
+FileSize	108
 DBF_Version	03
 NRecords	1
 FirstRecPos	66
-RecLength	11
+RecLength	41
 TableFlags	0000
 CodePageMark	00
 ---	---
@@ -185,7 +185,7 @@ FieldN	0
 Name	a
 Type	C
 Offset	0
-Length	10
+Length	40
 Dec	0
 Flags	00
 --------	--------
@@ -198,7 +198,7 @@ CREATE TABLE t1
 a INT NOT NULL,
 b CHAR(10) NOT NULL,
 c VARCHAR(10) NOT NULL
-) ENGINE=CONNECT CHARSET=latin1 TABLE_TYPE=DBF FILE_NAME='t1.dbf';
+) ENGINE=CONNECT TABLE_TYPE=DBF FILE_NAME='t1.dbf';
 INSERT INTO t1 VALUES (1,'1','1');
 INSERT INTO t1 VALUES (2,'2','2');
 SELECT * FROM t1;
@@ -207,11 +207,11 @@ a	b	c
 2	2	2
 CALL dbf_header('MYSQLD_DATADIR/test/t1.dbf');
 --------	--------
-FileSize	195
+FileSize	315
 DBF_Version	03
 NRecords	2
 FirstRecPos	130
-RecLength	32
+RecLength	92
 TableFlags	0000
 CodePageMark	00
 ---	---
@@ -227,7 +227,7 @@ FieldN	1
 Name	b
 Type	C
 Offset	0
-Length	10
+Length	40
 Dec	0
 Flags	00
 ---	---
@@ -235,7 +235,7 @@ FieldN	2
 Name	c
 Type	C
 Offset	0
-Length	10
+Length	40
 Dec	0
 Flags	00
 --------	--------
@@ -246,7 +246,7 @@ DROP TABLE t1;
 CREATE TABLE t1
 (
 a012345678901234567890123456789 INT NOT NULL
-) ENGINE=CONNECT CHARSET=latin1 TABLE_TYPE=DBF FILE_NAME='t1.dbf';
+) ENGINE=CONNECT TABLE_TYPE=DBF FILE_NAME='t1.dbf';
 ERROR HY000: DBF: Column name 'a012345678901234567890123456789' is too long (max=10)
 #
 # Testing 2 columns with long names (12)
@@ -255,7 +255,7 @@ CREATE TABLE t1
 (
 a0123456789a INT NOT NULL,
 b0123456789b INT NOT NULL
-) ENGINE=CONNECT CHARSET=latin1 TABLE_TYPE=DBF FILE_NAME='t02x11.dbf';
+) ENGINE=CONNECT TABLE_TYPE=DBF FILE_NAME='t02x11.dbf';
 ERROR HY000: DBF: Column name 'a0123456789a' is too long (max=10)
 #
 # Testing 2 columns with long names (11)
@@ -264,7 +264,7 @@ CREATE TABLE t1
 (
 a012345678a INT NOT NULL,
 b012345678b INT NOT NULL
-) ENGINE=CONNECT CHARSET=latin1 TABLE_TYPE=DBF FILE_NAME='t02x12.dbf';
+) ENGINE=CONNECT TABLE_TYPE=DBF FILE_NAME='t02x12.dbf';
 ERROR HY000: DBF: Column name 'a012345678a' is too long (max=10)
 #
 # Testing 2 columns name length 10 (maximum possible length)
@@ -273,13 +273,13 @@ CREATE TABLE t1
 (
 a01234567a INT NOT NULL,
 b01234567b INT NOT NULL
-) ENGINE=CONNECT CHARSET=latin1 TABLE_TYPE=DBF FILE_NAME='t02x13.dbf';
+) ENGINE=CONNECT TABLE_TYPE=DBF FILE_NAME='t02x13.dbf';
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a01234567a` int(11) NOT NULL,
   `b01234567b` int(11) NOT NULL
-) ENGINE=CONNECT DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci `TABLE_TYPE`=DBF `FILE_NAME`='t02x13.dbf'
+) ENGINE=CONNECT DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci `TABLE_TYPE`=DBF `FILE_NAME`='t02x13.dbf'
 INSERT INTO t1 VALUES (1,2);
 SELECT * FROM t1;
 a01234567a	b01234567b
@@ -291,7 +291,7 @@ DROP TABLE t1;
 CREATE TABLE t1
 (
 a bigint NOT NULL
-) ENGINE=CONNECT CHARSET=latin1 TABLE_TYPE=DBF FILE_NAME='t1.dbf';
+) ENGINE=CONNECT TABLE_TYPE=DBF FILE_NAME='t1.dbf';
 INSERT INTO t1 VALUES (0x7FFFFFFFFFFFFFFF);
 INSERT INTO t1 VALUES (-0x8000000000000000);
 SELECT * FROM t1;
@@ -323,7 +323,7 @@ DROP TABLE t1;
 CREATE TABLE t1
 (
 a TINYINT NOT NULL
-) ENGINE=CONNECT CHARSET=latin1 TABLE_TYPE=DBF FILE_NAME='t1.dbf';
+) ENGINE=CONNECT TABLE_TYPE=DBF FILE_NAME='t1.dbf';
 INSERT INTO t1 VALUES (123);
 SELECT * FROM t1;
 a
@@ -335,7 +335,7 @@ DROP TABLE t1;
 CREATE TABLE t1
 (
 a SMALLINT NOT NULL
-) ENGINE=CONNECT CHARSET=latin1 TABLE_TYPE=DBF FILE_NAME='t1.dbf';
+) ENGINE=CONNECT TABLE_TYPE=DBF FILE_NAME='t1.dbf';
 INSERT INTO t1 VALUES (0x7FFF);
 INSERT INTO t1 VALUES (-0x8000);
 SELECT * FROM t1;
@@ -398,7 +398,7 @@ DROP TABLE t1;
 CREATE TABLE t1
 (
 a CHAR(86) CHARACTER SET utf8 NOT NULL
-) ENGINE=CONNECT CHARSET=latin1 TABLE_TYPE=DBF FILE_NAME='t1.dbf';
+) ENGINE=CONNECT TABLE_TYPE=DBF FILE_NAME='t1.dbf';
 ERROR HY000: DBF: Column length too big for 'a' (max=255)
 #
 # Testing too long VARCHAR
@@ -407,12 +407,12 @@ ERROR HY000: DBF: Column length too big for 'a' (max=255)
 CREATE TABLE t1
 (
 a VARCHAR(256) NOT NULL
-) ENGINE=CONNECT CHARSET=latin1 TABLE_TYPE=DBF FILE_NAME='t1.dbf';
+) ENGINE=CONNECT TABLE_TYPE=DBF FILE_NAME='t1.dbf';
 ERROR HY000: DBF: Column length too big for 'a' (max=255)
 CREATE TABLE t1
 (
 a VARCHAR(86) CHARACTER SET utf8 NOT NULL
-) ENGINE=CONNECT CHARSET=latin1 TABLE_TYPE=DBF FILE_NAME='t1.dbf';
+) ENGINE=CONNECT TABLE_TYPE=DBF FILE_NAME='t1.dbf';
 ERROR HY000: DBF: Column length too big for 'a' (max=255)
 CREATE TABLE t1
 (
@@ -425,22 +425,22 @@ ERROR HY000: DBF: Column length too big for 'a' (max=255)
 CREATE TABLE t1
 (
 a BLOB
-) ENGINE=CONNECT CHARSET=latin1 TABLE_TYPE=DBF FILE_NAME='t1.dbf';
+) ENGINE=CONNECT TABLE_TYPE=DBF FILE_NAME='t1.dbf';
 ERROR 42000: Storage engine CONNECT doesn't support BLOB/TEXT columns
 CREATE TABLE t1
 (
 a TINYBLOB
-) ENGINE=CONNECT CHARSET=latin1 TABLE_TYPE=DBF FILE_NAME='t1.dbf';
+) ENGINE=CONNECT TABLE_TYPE=DBF FILE_NAME='t1.dbf';
 ERROR 42000: Storage engine CONNECT doesn't support BLOB/TEXT columns
 CREATE TABLE t1
 (
 a MEDIUMBLOB
-) ENGINE=CONNECT CHARSET=latin1 TABLE_TYPE=DBF FILE_NAME='t1.dbf';
+) ENGINE=CONNECT TABLE_TYPE=DBF FILE_NAME='t1.dbf';
 ERROR 42000: Storage engine CONNECT doesn't support BLOB/TEXT columns
 CREATE TABLE t1
 (
 a LONGBLOB
-) ENGINE=CONNECT CHARSET=latin1 TABLE_TYPE=DBF FILE_NAME='t1.dbf';
+) ENGINE=CONNECT TABLE_TYPE=DBF FILE_NAME='t1.dbf';
 ERROR 42000: Storage engine CONNECT doesn't support BLOB/TEXT columns
 #
 # Testing DATE
@@ -478,7 +478,7 @@ DROP TABLE t1;
 CREATE TABLE t1
 (
 a FLOAT(12,4) NOT NULL
-) ENGINE=CONNECT CHARSET=latin1 TABLE_TYPE=DBF FILE_NAME='t1.dbf';
+) ENGINE=CONNECT TABLE_TYPE=DBF FILE_NAME='t1.dbf';
 INSERT INTO t1 VALUES (123);
 SELECT * FROM t1;
 a
@@ -508,7 +508,7 @@ DROP TABLE t1;
 CREATE TABLE t1
 (
 a DOUBLE(20,5) NOT NULL
-) ENGINE=CONNECT CHARSET=latin1 TABLE_TYPE=DBF FILE_NAME='t1.dbf';
+) ENGINE=CONNECT TABLE_TYPE=DBF FILE_NAME='t1.dbf';
 INSERT INTO t1 VALUES (123);
 INSERT INTO t1 VALUES (123456789.12345);
 SELECT * FROM t1;
@@ -629,7 +629,7 @@ c1 VARCHAR(10) NOT NULL,
 c2 VARCHAR(10) NOT NULL DEFAULT 'def',
 i1 INT NOT NULL,
 i2 INT NOT NULL DEFAULT 123
-) ENGINE=CONNECT CHARSET=latin1 TABLE_TYPE=DBF FILE_NAME='t1.dbf';
+) ENGINE=CONNECT TABLE_TYPE=DBF FILE_NAME='t1.dbf';
 INSERT INTO t1 VALUES ('10','10',10,10);
 INSERT INTO t1(c1,i1) VALUES ('20',20);
 INSERT INTO t1 VALUES ('30',DEFAULT,30,DEFAULT);
@@ -640,11 +640,11 @@ c1	c2	i1	i2
 30	def	30	123
 CALL dbf_header('MYSQLD_DATADIR/test/t1.dbf');
 --------	--------
-FileSize	292
+FileSize	472
 DBF_Version	03
 NRecords	3
 FirstRecPos	162
-RecLength	43
+RecLength	103
 TableFlags	0000
 CodePageMark	00
 ---	---
@@ -652,7 +652,7 @@ FieldN	0
 Name	c1
 Type	C
 Offset	0
-Length	10
+Length	40
 Dec	0
 Flags	00
 ---	---
@@ -660,7 +660,7 @@ FieldN	1
 Name	c2
 Type	C
 Offset	0
-Length	10
+Length	40
 Dec	0
 Flags	00
 ---	---

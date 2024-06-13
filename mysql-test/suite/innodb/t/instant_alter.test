@@ -1,8 +1,6 @@
 --source include/innodb_page_size.inc
 --source include/have_sequence.inc
---disable_query_log
 --source include/test_db_charset_latin1.inc
---enable_query_log
 
 let $datadir=`select @@datadir`;
 
@@ -972,6 +970,4 @@ ALTER TABLE mdev28822_100427_innodb ADD i1 INTEGER, ALGORITHM=INSTANT;
 DROP TABLE mdev28822_100427_innodb;
 SET GLOBAL innodb_stats_persistent = @save_stats_persistent;
 
---disable_query_log
 --source include/test_db_charset_restore.inc
---enable_query_log

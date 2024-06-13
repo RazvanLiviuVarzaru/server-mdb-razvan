@@ -10,6 +10,10 @@ INSERT INTO t1 VALUES(2, repeat('b', 100), repeat('a', 100));
 COMMIT;
 SET DEBUG_SYNC="now SIGNAL dml_commit";
 connection default;
+# The below error displays a wrong (too long) key value.
+# The problem is reported as:
+#   MDEV-34387 Too long value in the Duplicate entry message with online alter and utf8
+# Please make sure to remove this comment when MDEV-34387 is fixed.
 ERROR 23000: Duplicate entry 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb' for key 'f2'
 connection default;
 SET DEBUG_SYNC="inplace_after_index_build SIGNAL dml_start WAIT_FOR dml_commit";
