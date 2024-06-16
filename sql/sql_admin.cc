@@ -673,6 +673,13 @@ static bool mysql_admin_table(THD* thd, TABLE_LIST* tables,
             my_eof(thd);
             goto err;
           }
+          /*
+            changes above are made in-place, make sure the table will be
+            reopened to reinitialize partitioning information.
+            Normally ALTER reopen the table naturally, but some ALTER
+            sub-commands and failed ALTERs don't.
+          */
+          table->table->mark_table_for_reopen();
         }
       }
 #endif
