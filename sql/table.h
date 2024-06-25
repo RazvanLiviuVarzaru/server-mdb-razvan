@@ -1870,6 +1870,14 @@ enum enum_schema_table_state
 enum enum_fk_option { FK_OPTION_UNDEF, FK_OPTION_RESTRICT, FK_OPTION_NO_ACTION,
   FK_OPTION_CASCADE, FK_OPTION_SET_NULL, FK_OPTION_SET_DEFAULT };
 
+enum enum_fk_nullablity
+{
+  /** Foreign table or Referenced table doesn't exist */
+  NOT_EXIST,
+  ALLOWS_NULL,
+  ALLOWS_NOT_NULL
+};
+
 typedef struct st_foreign_key_info
 {
   LEX_CSTRING *foreign_id;
@@ -1882,6 +1890,8 @@ typedef struct st_foreign_key_info
   LEX_CSTRING *referenced_key_name;
   List<LEX_CSTRING> foreign_fields;
   List<LEX_CSTRING> referenced_fields;
+  enum_fk_nullablity foreign_fields_nullable;
+  enum_fk_nullablity referenced_fields_nullable;
 } FOREIGN_KEY_INFO;
 
 LEX_CSTRING *fk_option_name(enum_fk_option opt);

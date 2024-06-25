@@ -15213,6 +15213,9 @@ get_foreign_key_info(
  		return NULL;
  	}
 
+	f_key_info.foreign_fields_nullable = NOT_EXIST;
+	f_key_info.referenced_fields_nullable = NOT_EXIST;
+
 	ptr = dict_remove_db_name(foreign->id);
 	f_key_info.foreign_id = thd_make_lex_string(
 		thd, 0, ptr, strlen(ptr), 1);
@@ -15256,11 +15259,45 @@ get_foreign_key_info(
 		name = thd_make_lex_string(thd, name, ptr,
 					   strlen(ptr), 1);
 		f_key_info.foreign_fields.push_back(name);
+
+		if (foreign->foreign_index != nullptr) {
+			dict_field_t *field =
+				dict_index_get_nth_field(
+					foreign->foreign_index, i);
+			if (field && field->col
+			    && !(field->col->prtype & DATA_NOT_NULL)) {
+				f_key_info.foreign_fields_nullable =
+						ALLOWS_NULL;
+			}
+		}
+
 		ptr = foreign->referenced_col_names[i];
 		name = thd_make_lex_string(thd, name, ptr,
 					   strlen(ptr), 1);
 		f_key_info.referenced_fields.push_back(name);
+		if (foreign->referenced_index != nullptr) {
+			dict_field_t *field =
+				dict_index_get_nth_field(
+					foreign->referenced_index,
+					i);
+			if (field && field->col
+			    && !(field->col->prtype & DATA_NOT_NULL)) {
+				f_key_info.referenced_fields_nullable =
+						ALLOWS_NULL;
+			}
+		}
+
 	} while (++i < foreign->n_fields);
+
+	if (foreign->referenced_index
+	    && !f_key_info.referenced_fields_nullable) {
+		f_key_info.referenced_fields_nullable = ALLOWS_NOT_NULL;
+	}
+
+	if (foreign->foreign_index
+	    && !f_key_info.foreign_fields_nullable) {
+		f_key_info.foreign_fields_nullable = ALLOWS_NOT_NULL;
+	}
 
 	if (foreign->type & DICT_FOREIGN_ON_DELETE_CASCADE) {
 		f_key_info.delete_method = FK_OPTION_CASCADE;

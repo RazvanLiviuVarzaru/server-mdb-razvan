@@ -4211,103 +4211,179 @@ innobase_dropping_foreign(
 	return(false);
 }
 
-/** Determines if an InnoDB FOREIGN KEY constraint depends on a
-column that is being dropped or modified to NOT NULL.
+/** Check whether the given column name exists in names
+@param n_fields number of column names
+@param name     column name to search
+@param names    column names to be searched from
+@return true if name exists or false if name doesn't exist. */
+static
+bool col_exists(unsigned n_fields, const char *name, const char **names)
+{
+  for (unsigned i = 0; i < n_fields; i++)
+  {
+    if (!strcmp(names[i], name))
+      return true;
+  }
+  return false;
+}
+
+/** Determines if an InnoDB FOREIGN KEY constraint depends on
+the nullability changes of a column.
+Enforce the following rules:
+
+i) Don't allow the child foreign key column from NULL TO NOT NULL when
+     1) Foreign key constraint type is ON UPDATE SET NULL
+     2) Foreign key constraint type is ON DELETE SET NULL
+     3) Foreign key constraint type is UPDATE CASCADE and referenced
+        column allows NULL values
+
+ii) Don't allow the parent referenced column from NOT NULL to NULL when
+foreign key constraint type is UPDATE CASCADE and foreign column
+doesn't allow NULL values
+
 @param user_table InnoDB table as it is before the ALTER operation
-@param col_name Name of the column being altered
 @param drop_fk constraints being dropped
 @param n_drop_fk number of constraints that are being dropped
-@param drop true=drop column, false=set NOT NULL
+@param col_name  modified column name
+@param new_field_flags Modified field flags
 @retval true Not allowed (will call my_error())
 @retval false Allowed
 */
-MY_ATTRIBUTE((pure, nonnull(1,4), warn_unused_result))
 static
-bool
-innobase_check_foreigns_low(
-	const dict_table_t*	user_table,
-	dict_foreign_t**	drop_fk,
-	ulint			n_drop_fk,
-	const char*		col_name,
-	bool			drop)
+bool innobase_check_foreigns_nullability(
+  const dict_table_t *user_table,
+  dict_foreign_t     **drop_fk,
+  ulint              n_drop_fk,
+  const char*        col_name,
+  uint32_t           new_field_flags)
 {
-	dict_foreign_t*	foreign;
-	ut_ad(mutex_own(&dict_sys.mutex));
+  ut_ad(mutex_own(&dict_sys.mutex));
 
-	/* Check if any FOREIGN KEY constraints are defined on this
-	column. */
+  /* Changing from NOT NULL to NULL. So check referenced set */
+  if (!(new_field_flags & NOT_NULL_FLAG))
+    goto ref_field_check;
 
-	for (dict_foreign_set::const_iterator it = user_table->foreign_set.begin();
-	     it != user_table->foreign_set.end();
-	     ++it) {
+  for (dict_foreign_t *foreign : user_table->foreign_set)
+  {
+    if (innobase_dropping_foreign(foreign, drop_fk, n_drop_fk))
+      continue;
 
-		foreign = *it;
+    if ((foreign->type & DICT_FOREIGN_ON_UPDATE_CASCADE) &&
+        foreign->referenced_index)
+    {
+      for (unsigned f = 0;f < foreign->n_fields; f++)
+      {
+        dict_field_t* field= dict_index_get_nth_field(
+                               foreign->referenced_index, f);
+        if (!(field->col->prtype & DATA_NOT_NULL))
+          goto col_exist_check;
+      }
+    }
 
-		if (!drop && !(foreign->type
-			       & (DICT_FOREIGN_ON_DELETE_SET_NULL
-				  | DICT_FOREIGN_ON_UPDATE_SET_NULL))) {
-			continue;
-		}
+    if (foreign->type & DICT_FOREIGN_ON_DELETE_SET_NULL
+        || foreign->type & DICT_FOREIGN_ON_UPDATE_SET_NULL)
+    {
+col_exist_check:
+      if (col_exists(foreign->n_fields, col_name,
+                     foreign->foreign_col_names))
+      {
+        my_error(ER_FK_COLUMN_NOT_NULL, MYF(0), col_name,
+                 foreign->id);
+        return true;
+      }
+    }
+  }
 
-		if (innobase_dropping_foreign(foreign, drop_fk, n_drop_fk)) {
-			continue;
-		}
-
-		for (unsigned f = 0; f < foreign->n_fields; f++) {
-			if (!strcmp(foreign->foreign_col_names[f],
-				    col_name)) {
-				my_error(drop
-					 ? ER_FK_COLUMN_CANNOT_DROP
-					 : ER_FK_COLUMN_NOT_NULL, MYF(0),
-					 col_name, foreign->id);
-				return(true);
-			}
-		}
+  goto func_exit;
+ref_field_check:
+  for (dict_foreign_t *foreign : user_table->referenced_set)
+  {
+    if ((foreign->type & DICT_FOREIGN_ON_UPDATE_CASCADE)
+        && foreign->foreign_index)
+    {
+      for (unsigned f = 0;f < foreign->n_fields; f++)
+      {
+        dict_field_t* field= dict_index_get_nth_field(
+                               foreign->foreign_index, f);
+        if ((field->col->prtype & DATA_NOT_NULL) &&
+            col_exists(foreign->n_fields, col_name,
+                       foreign->referenced_col_names))
+	{
+          my_error(ER_FK_COLUMN_CANNOT_CHANGE_CHILD, MYF(0),
+                   col_name, foreign->id,
+                   foreign->referenced_table_name);
+          return true;
 	}
+      }
+    }
+  }
+func_exit:
+  return false;
+}
 
-	if (!drop) {
-		/* SET NULL clauses on foreign key constraints of
-		child tables affect the child tables, not the parent table.
-		The column can be NOT NULL in the parent table. */
-		return(false);
-	}
+/** Determines if an InnoDB FOREIGN KEY constraint depends on
+the column when it is being dropped.
+@param user_table InnoDB table as it is before the ALTER operation
+@param drop_fk constraints being dropped
+@param n_drop_fk number of constraints that are being dropped
+@param col_name column name to be dropped
+@retval true Not allowed (will call my_error())
+@retval false Allowed
+*/
+static
+bool innobase_check_foreign_drop_col(
+  const dict_table_t   *user_table,
+  dict_foreign_t       **drop_fk,
+  ulint                n_drop_fk,
+  const char*          col_name)
+{
+  ut_ad(mutex_own(&dict_sys.mutex));
 
-	/* Check if any FOREIGN KEY constraints in other tables are
-	referring to the column that is being dropped. */
-	for (dict_foreign_set::const_iterator it
-		= user_table->referenced_set.begin();
-	     it != user_table->referenced_set.end();
-	     ++it) {
+  /* Check if any FOREIGN KEY constraints are defined on this column. */
+  for (dict_foreign_set::const_iterator it=
+         user_table->foreign_set.begin();
+       it != user_table->foreign_set.end(); ++it)
+  {
+    dict_foreign_t *foreign= *it;
+    if (innobase_dropping_foreign(foreign, drop_fk, n_drop_fk))
+      continue;
 
-		foreign = *it;
+    for (unsigned f = 0; f < foreign->n_fields; f++)
+      if (!strcmp(foreign->foreign_col_names[f], col_name))
+      {
+        my_error(ER_FK_COLUMN_CANNOT_DROP, MYF(0),
+                 col_name, foreign->id);
+        return true;
+      }
+  }
 
-		if (innobase_dropping_foreign(foreign, drop_fk, n_drop_fk)) {
-			continue;
-		}
+  /* Check if any FOREIGN KEY constraints in other tables are
+  referring to the column that is being dropped. */
+  for (dict_foreign_set::const_iterator it=
+         user_table->referenced_set.begin();
+       it != user_table->referenced_set.end(); ++it)
+  {
+    dict_foreign_t *foreign= *it;
 
-		for (unsigned f = 0; f < foreign->n_fields; f++) {
-			char display_name[FN_REFLEN];
+    if (innobase_dropping_foreign(foreign, drop_fk, n_drop_fk))
+      continue;
 
-			if (strcmp(foreign->referenced_col_names[f],
-				   col_name)) {
-				continue;
-			}
-
-			char* buf_end = innobase_convert_name(
-				display_name, (sizeof display_name) - 1,
-				foreign->foreign_table_name,
-				strlen(foreign->foreign_table_name),
-				NULL);
-			*buf_end = '\0';
-			my_error(ER_FK_COLUMN_CANNOT_DROP_CHILD,
-				 MYF(0), col_name, foreign->id,
-				 display_name);
-
-			return(true);
-		}
-	}
-
-	return(false);
+    for (unsigned f = 0; f < foreign->n_fields; f++)
+    {
+      char display_name[FN_REFLEN];
+      if (strcmp(foreign->referenced_col_names[f], col_name))
+        continue;
+      char* buf_end = innobase_convert_name(
+                        display_name, (sizeof display_name) - 1,
+                        foreign->foreign_table_name,
+                        strlen(foreign->foreign_table_name), NULL);
+      *buf_end = '\0';
+      my_error(ER_FK_COLUMN_CANNOT_DROP_CHILD,
+               MYF(0), col_name, foreign->id, display_name);
+      return true;
+    }
+  }
+  return false;
 }
 
 /** Determines if an InnoDB FOREIGN KEY constraint depends on a
@@ -4342,10 +4418,21 @@ innobase_check_foreigns(
 				return field.field == *fp;
 			});
 
-		if (it == end || (it->flags & NOT_NULL_FLAG)) {
-			if (innobase_check_foreigns_low(
+		if (it == end) {
+			if (innobase_check_foreign_drop_col(
+				user_table, drop_fk, n_drop_fk,
+				(*fp)->field_name.str)) {
+				return true;
+			}
+			continue;
+		}
+
+
+		if ((it->flags & NOT_NULL_FLAG)
+		    != ((*fp)->flags & NOT_NULL_FLAG)) {
+			if (innobase_check_foreigns_nullability(
 				    user_table, drop_fk, n_drop_fk,
-				    (*fp)->field_name.str, it == end)) {
+				    (*fp)->field_name.str, it->flags)) {
 				return(true);
 			}
 		}

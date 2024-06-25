@@ -9588,9 +9588,13 @@ enum fk_column_change_type
 
 static enum fk_column_change_type
 fk_check_column_changes(THD *thd, Alter_info *alter_info,
-                        List<LEX_CSTRING> &fk_columns,
-                        const char **bad_column_name)
+                        FOREIGN_KEY_INFO *fk,
+                        const char **bad_column_name,
+                        bool referenced=false)
 {
+  List<LEX_CSTRING> fk_columns= referenced
+                                ? fk->referenced_fields
+                                : fk->foreign_fields;
   List_iterator_fast<LEX_CSTRING> column_it(fk_columns);
   LEX_CSTRING *column;
 
@@ -9628,16 +9632,47 @@ fk_check_column_changes(THD *thd, Alter_info *alter_info,
       const bool equal_result= old_field->is_equal(*new_field);
       new_field->flags= flags;
 
-      if ((equal_result == IS_EQUAL_NO) ||
-          ((new_field->flags & NOT_NULL_FLAG) &&
-           !(old_field->flags & NOT_NULL_FLAG)))
+      if ((equal_result == IS_EQUAL_NO))
       {
         /*
           Column in a FK has changed significantly and it
           may break referential intergrity.
         */
+data_change:
         *bad_column_name= column->str;
         return FK_COLUMN_DATA_CHANGE;
+      }
+      else if ((new_field->flags & NOT_NULL_FLAG) !=
+               (old_field->flags & NOT_NULL_FLAG))
+      {
+        if (referenced)
+        {
+          if (!(new_field->flags & NOT_NULL_FLAG))
+          {
+            /* Don't allow referenced column to change from
+            NOT NULL to NULL when foreign key relation is
+            UPDATE CASCADE and foreign key column doesn't allow NULL */
+            if (fk->update_method == FK_OPTION_CASCADE
+                && fk->foreign_fields_nullable == ALLOWS_NOT_NULL)
+              goto data_change;
+          }
+        }
+        else
+        {
+          if (new_field->flags & NOT_NULL_FLAG)
+          {
+            /* Don't allow the foreign column to change
+            from NULL to NOT NULL when foreign key type is
+            1) UPDATE SET NULL
+            2) DELETE SET NULL
+            3) UPDATE CASCADE and referenced column allows NULL */
+            if (fk->update_method == FK_OPTION_SET_NULL
+                || fk->delete_method == FK_OPTION_SET_NULL
+                || (fk->update_method == FK_OPTION_CASCADE
+                    && fk->referenced_fields_nullable == ALLOWS_NULL))
+              goto data_change;
+          }
+        }
       }
     }
     else
@@ -9748,9 +9783,8 @@ static bool fk_prepare_copy_alter_table(THD *thd, TABLE *table,
     enum fk_column_change_type changes;
     const char *bad_column_name;
 
-    changes= fk_check_column_changes(thd, alter_info,
-                                     f_key->referenced_fields,
-                                     &bad_column_name);
+    changes= fk_check_column_changes(thd, alter_info, f_key,
+                                     &bad_column_name, true);
 
     switch(changes)
     {
@@ -9822,8 +9856,7 @@ static bool fk_prepare_copy_alter_table(THD *thd, TABLE *table,
     enum fk_column_change_type changes;
     const char *bad_column_name;
 
-    changes= fk_check_column_changes(thd, alter_info,
-                                     f_key->foreign_fields,
+    changes= fk_check_column_changes(thd, alter_info, f_key,
                                      &bad_column_name);
 
     switch(changes)

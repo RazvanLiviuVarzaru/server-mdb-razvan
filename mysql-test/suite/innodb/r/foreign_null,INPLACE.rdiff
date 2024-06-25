@@ -1,0 +1,32 @@
+--- foreign_null.result	2024-06-26 02:26:06.830377918 +0530
++++ foreign_null.reject	2024-06-26 02:26:12.838781149 +0530
+@@ -1,20 +1,20 @@
+-COPY
++INPLACE
+ CREATE TABLE t1(f1 INT, f2 INT, PRIMARY KEY(f1), KEY(f2))ENGINE=InnoDB;
+ CREATE TABLE t2(f1 INT, FOREIGN KEY(f1) REFERENCES t1(f2) ON UPDATE CASCADE)ENGINE=InnoDB;
+-ALTER TABLE t2 MODIFY COLUMN f1 INT NOT NULL, algorithm=COPY;
+-ERROR HY000: Cannot change column 'f1': used in a foreign key constraint 't2_ibfk_1'
++ALTER TABLE t2 MODIFY COLUMN f1 INT NOT NULL, algorithm=INPLACE;
++ERROR HY000: Column 'f1' cannot be NOT NULL: needed in a foreign key constraint 'test/t2_ibfk_1' SET NULL
+ DROP TABLE t2, t1;
+ CREATE TABLE t1(f1 INT, f2 INT, PRIMARY KEY(f1), KEY(f2))ENGINE=InnoDB;
+ CREATE TABLE t2(f1 INT, f2 INT, FOREIGN KEY(f1) REFERENCES t1(f1) ON UPDATE SET NULL, FOREIGN KEY (f2) REFERENCES t1(f2) ON DELETE SET NULL)ENGINE=InnoDB;
+-ALTER TABLE t2 MODIFY COLUMN f2 INT NOT NULL, ALGORITHM=COPY;
+-ERROR HY000: Cannot change column 'f2': used in a foreign key constraint 't2_ibfk_2'
+-ALTER TABLE t2 MODIFY COLUMN f1 INT NOT NULL, ALGORITHM=COPY;
+-ERROR HY000: Cannot change column 'f1': used in a foreign key constraint 't2_ibfk_1'
++ALTER TABLE t2 MODIFY COLUMN f2 INT NOT NULL, ALGORITHM=INPLACE;
++ERROR HY000: Column 'f2' cannot be NOT NULL: needed in a foreign key constraint 'test/t2_ibfk_2' SET NULL
++ALTER TABLE t2 MODIFY COLUMN f1 INT NOT NULL, ALGORITHM=INPLACE;
++ERROR HY000: Column 'f1' cannot be NOT NULL: needed in a foreign key constraint 'test/t2_ibfk_1' SET NULL
+ DROP TABLE t2, t1;
+ CREATE TABLE t1(f1 INT, f2 INT NOT NULL, PRIMARY KEY(f1), KEY(f2))ENGINE=InnoDB;
+ CREATE TABLE t2(f1 INT NOT NULL, FOREIGN KEY(f1) REFERENCES t1(f2) ON UPDATE CASCADE)ENGINE=InnoDB;
+-ALTER TABLE t1 MODIFY COLUMN f2 INT, ALGORITHM=COPY;
+-ERROR HY000: Cannot change column 'f2': used in a foreign key constraint 't2_ibfk_1' of table 'test.t2'
++ALTER TABLE t1 MODIFY COLUMN f2 INT, ALGORITHM=INPLACE;
++ERROR HY000: Cannot change column 'f2': used in a foreign key constraint 'test/t2_ibfk_1' of table 'test/t1'
+ DROP TABLE t2, t1;
+ SET FOREIGN_KEY_CHECKS=0;
+ CREATE TABLE t2(f1 INT, FOREIGN KEY(f1) REFERENCES t1(f2) ON UPDATE CASCADE)ENGINE=InnoDB;
