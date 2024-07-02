@@ -18531,3 +18531,34 @@ valdouble	valint1
 5	3289988
 DROP TABLE t1,t2;
 # End of 10.4 tests
+# MDEV-34506 2nd execution name resolution problem with pushdown into
+#   unions
+#
+#  When pushing a condition into all selects of a unit with more than one
+#  select, items are renamed so we can re-use the condition being pushed.
+#  These names need to be saved and reset for correct name resolution on
+#  second execution of prepared statements.
+create table t1 (c1 int, c2 int, c3 int);
+insert into t1 values (1,2,3),(4,5,6);
+create table t2 like t1;
+insert into t2 values (7,8,9),(10,11,12);
+create view v1 (f1, f2, f3) as select * from (
+select c1, c2, sum(c3) as s from t1 group by c1, c2 having s > 2
+union
+select c1, c2, sum(c3) as u from t2 group by c1, c2 having u > 3) d2;
+prepare stmt from 'select * from v1 where f2 > 0';
+execute stmt;
+f1	f2	f3
+1	2	3
+4	5	6
+7	8	9
+10	11	12
+execute stmt;
+f1	f2	f3
+1	2	3
+4	5	6
+7	8	9
+10	11	12
+drop view v1;
+drop table t1, t2;
+# End of 10.5 tests
