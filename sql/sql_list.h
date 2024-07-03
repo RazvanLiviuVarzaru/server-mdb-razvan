@@ -347,7 +347,7 @@ public:
       check_list()
         name  Name to print to trace file
 
-    RETURN 
+    RETURN
       1  The list is Ok.
       0  List invariants are not met.
   */
@@ -537,10 +537,9 @@ public:
   class Iterator;
   using value_type= T;
   using iterator= Iterator;
-  using const_iterator= const Iterator;
 
-  Iterator begin() const { return Iterator(first); }
-  Iterator end() const { return Iterator(); }
+  iterator begin() const { return iterator(first); }
+  iterator end() const { return iterator(); }
 
   class Iterator
   {
@@ -561,7 +560,7 @@ public:
       return *this;
     }
 
-    T operator++(int)
+    Iterator operator++(int)
     {
       Iterator tmp(*this);
       operator++();
@@ -582,7 +581,7 @@ public:
     }
 
   private:
-    list_node *node{&end_of_list};
+    list_node* node{&end_of_list};
   };
 };
 
