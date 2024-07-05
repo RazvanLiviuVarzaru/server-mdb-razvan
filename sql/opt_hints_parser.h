@@ -23,6 +23,19 @@
 #include "sql_list.h"
 #include "simple_parser.h"
 
+struct st_select_lex;
+
+/**
+  Environment data for the name resolution phase
+*/
+struct Parse_context {
+  THD * const thd;              ///< Current thread handler
+  MEM_ROOT *mem_root;           ///< Current MEM_ROOT
+  st_select_lex * select;       ///< Current SELECT_LEX object
+
+  Parse_context(THD *thd, st_select_lex *select);
+};
+
 
 class Optimizer_hint_tokenizer: public Extended_string_tokenizer
 {
@@ -523,6 +536,8 @@ private:
   {
   public:
     using AND4::AND4;
+
+    bool resolve(Parse_context *pc) const;
   };
 
 
@@ -545,6 +560,8 @@ private:
   {
   public:
     using AND4::AND4;
+    
+    bool resolve(Parse_context *pc) const;
   };
 
 
@@ -557,6 +574,8 @@ private:
   {
   public:
     using AND4::AND4;
+
+    bool resolve(Parse_context *pc) const;
   };
 
 
@@ -572,6 +591,7 @@ private:
   {
   public:
     using OR3::OR3;
+
   };
 
 
@@ -592,6 +612,8 @@ public:
   {
   public:
     using LIST::LIST;
+    
+    bool resolve(Parse_context *pc);
   };
 
   /*

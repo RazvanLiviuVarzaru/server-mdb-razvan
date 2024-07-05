@@ -22,6 +22,13 @@
 #include "mysqld_error.h"
 #include "sql_class.h"
 
+Parse_context::Parse_context(THD *thd, st_select_lex *select)
+: thd(thd),
+  mem_root(thd->mem_root),
+  select(select)
+{}
+
+
 // This method is for debug purposes
 bool Optimizer_hint_parser::parse_token_list(THD *thd)
 {
@@ -102,4 +109,165 @@ Optimizer_hint_parser::
     return true;
   *pe= std::move(elem);
   return push_back(pe, p->m_thd->mem_root);
+}
+
+
+/**
+  Returns a pointer to Opt_hints_global object,
+  creates Opt_hints object if not exist.
+
+  @param pc   pointer to Parse_context object
+
+  @return  pointer to Opt_hints object,
+           NULL if failed to create the object
+*/
+
+static Opt_hints_global *get_global_hints(Parse_context *pc)
+{
+  LEX *lex= pc->thd->lex;
+
+  if (!lex->opt_hints_global)
+    lex->opt_hints_global= new Opt_hints_global(pc->thd->mem_root);
+  if (lex->opt_hints_global)
+    lex->opt_hints_global->set_resolved();
+  return lex->opt_hints_global;
+}
+
+
+static Opt_hints_qb *get_qb_hints(Parse_context *pc)
+{
+  if (pc->select->opt_hints_qb)
+    return pc->select->opt_hints_qb;
+
+  Opt_hints_global *global_hints= get_global_hints(pc);
+  if (global_hints == NULL)
+    return NULL;
+
+  Opt_hints_qb *qb= new Opt_hints_qb(global_hints, pc->thd->mem_root,
+                                     pc->select->select_number);
+  if (qb)
+  {
+    global_hints->register_child(qb);
+    pc->select->opt_hints_qb= qb;
+    qb->set_resolved();
+  }
+  return qb;
+}
+
+bool Optimizer_hint_parser::Table_level_hint::resolve(Parse_context *pc) const
+{
+  const Table_level_hint_type &table_level_hint_type=
+      static_cast<const Table_level_hint_type&>(*this);
+
+  switch (table_level_hint_type.id())
+  {
+  case TokenID::keyword_BNL:
+     
+     break;
+  case TokenID::keyword_NO_BNL:
+   
+     break;
+  case TokenID::keyword_BKA:
+     
+     break;
+  case TokenID::keyword_NO_BKA:
+   
+     break;
+  default:
+     DBUG_ASSERT(0);
+     return true;
+  }
+  return false;
+}
+
+
+bool Optimizer_hint_parser::Index_level_hint::resolve(Parse_context *pc) const
+{
+  const Index_level_hint_type &index_level_hint_type=
+      static_cast<const Index_level_hint_type&>(*this);
+
+  switch (index_level_hint_type.id())
+  {
+  case TokenID::keyword_NO_ICP:
+     
+     break;
+  case TokenID::keyword_MRR:
+   
+     break;
+  case TokenID::keyword_NO_MRR:
+   
+     break;
+  case TokenID::keyword_NO_RANGE_OPTIMIZATION:
+   
+     break;
+  default:
+     DBUG_ASSERT(0);
+     return true;
+  }
+  return false;
+}
+
+
+bool Optimizer_hint_parser::Qb_name_hint::resolve(Parse_context *pc) const
+{
+  // OLEGS: todo
+  // const  &index_level_hint_type=
+  //     static_cast<const Index_level_hint_type&>(*this);
+
+  // switch (token.id())
+  // {
+  // case TokenID::keyword_NO_ICP:
+     
+  //    break;
+  // case TokenID::keyword_MRR:
+   
+  //    break;
+  // case TokenID::keyword_NO_MRR:
+   
+  //    break;
+  // case TokenID::keyword_NO_RANGE_OPTIMIZATION:
+   
+  //    break;
+  // default:
+  //    DBUG_ASSERT(0);
+  //    return true;
+  // }
+  return false;
+}
+
+bool
+Optimizer_hint_parser::
+  Hint_list::resolve(Parse_context *pc)
+{
+  if (!get_qb_hints(pc))
+    return true;
+
+  List_iterator_fast<Optimizer_hint_parser::Hint> li(*this);
+  while(Optimizer_hint_parser::Hint *hint= li++)
+  {
+    if (const Table_level_hint &table_hint=
+        static_cast<const Table_level_hint &>(*hint))
+    {
+      if (table_hint.resolve(pc))
+        return true;
+    }
+    else if (const Index_level_hint &index_hint=
+             static_cast<const Index_level_hint &>(*hint))
+    {
+      if (index_hint.resolve(pc))
+        return true;
+    }
+    else if (const Qb_name_hint &qb_hint=
+             static_cast<const Qb_name_hint &>(*hint))
+    {
+      if (qb_hint.resolve(pc))
+        return true;
+    }
+  }
+  // for (PT_hint **h= hints.begin(), **end= hints.end(); h < end; h++)
+  // {
+  //   if (*h != NULL && (*h)->contextualize(pc))
+  //     return true;
+  // }
+  return false;
 }
