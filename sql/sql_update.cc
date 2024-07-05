@@ -43,6 +43,7 @@
                          // mysql_derived_filling
 
 
+#include <chrono>
 #include "sql_insert.h"  // For vers_insert_history_row() that may be
                          //   needed for System Versioning.
 #ifdef WITH_WSREP
@@ -345,6 +346,8 @@ int cut_fields_for_portion_of_time(THD *thd, TABLE *table,
 
 bool Sql_cmd_update::update_single_table(THD *thd)
 {
+  thd->status_var.dbug_time_spent= 0;
+  auto now= std::chrono::high_resolution_clock::now();
   SELECT_LEX_UNIT *unit = &lex->unit;
   SELECT_LEX *select_lex= unit->first_select();
   TABLE_LIST *const table_list = select_lex->get_table_list();
@@ -907,6 +910,7 @@ update_begin:
   THD_STAGE_INFO(thd, stage_updating);
   fix_rownum_pointers(thd, thd->lex->current_select, &updated_or_same);
   thd->get_stmt_da()->reset_current_row_for_warning(1);
+  now= std::chrono::high_resolution_clock::now();
   while (!(error=info.read_record()) && !thd->killed)
   {
     explain->tracker.on_record_read();
@@ -1120,6 +1124,9 @@ error:
       break;
     }
   }
+  thd->status_var.dbug_time_spent+=
+          std::chrono::duration_cast<std::chrono::nanoseconds>(
+                  std::chrono::high_resolution_clock::now() - now).count();
   ANALYZE_STOP_TRACKING(thd, &explain->command_tracker);
   table->auto_increment_field_not_null= FALSE;
   dup_key_found= 0;
