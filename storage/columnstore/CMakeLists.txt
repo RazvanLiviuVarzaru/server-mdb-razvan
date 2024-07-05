@@ -10,6 +10,9 @@ IF(NOT PLUGIN_PERFSCHEMA STREQUAL NO)
   add_definitions(-DHAVE_PSI_INTERFACE=)
 ENDIF()
 
+# let's temporarily disable the warning, until ColumnStore is fixed
+SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -U_GLIBCXX_DEBUG -U_GLIBCXX_ASSERTIONS")
+
 # new gcc is quite buggy re. spurious warnings. let's shut it up
 IF(CMAKE_COMPILER_IS_GNUCC AND CMAKE_C_COMPILER_VERSION VERSION_GREATER "12.0.0")
   # 12
