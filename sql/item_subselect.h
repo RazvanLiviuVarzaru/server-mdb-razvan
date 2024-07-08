@@ -1580,8 +1580,54 @@ public:
       partial_matches_count(0)
   {}
 
-  void track_partial_merge_keys(Ordered_key **merge_keys,
-                                uint merge_keys_count);
+  void report_partial_merge_keys(Ordered_key **merge_keys,
+                                 uint merge_keys_count);
+
+  void report_exec_strategy(Strategy es)
+  {
+    exec_strategy= es;
+  }
+
+  void report_partial_match_buffer_size(longlong sz)
+  {
+    partial_match_buffer_size= sz;
+  }
+
+  void increment_loops_count()
+  {
+    loops_count++;
+  }
+
+  void increment_index_lookups()
+  {
+    index_lookups_count++;
+  }
+
+  void increment_partial_matches()
+  {
+    partial_matches_count++;
+  }
+
+  void print_json_members(Json_writer *writer) const;
+private:
+  Strategy exec_strategy;
+  ulonglong partial_match_buffer_size;
+  Dynamic_array<ha_rows> partial_match_array_sizes;
+
+  /* Number of times subquery predicate was evaluated */
+  ulonglong loops_count;
+
+  /*
+    Number of times we made a lookup in the materialized temptable
+    (we do this when all parts of left_expr are not NULLs)
+  */
+  ulonglong index_lookups_count;
+
+  /*
+    Number of times we had to check for a partial match (either by
+    scanning the materialized subquery or by doing a merge)
+  */
+  ulonglong partial_matches_count;
 
   const char *get_exec_strategy() const
   {
@@ -1599,89 +1645,6 @@ public:
         return "unsupported";
     }
   }
-
-  void set_exec_strategy(Strategy es)
-  {
-    exec_strategy= es;
-  }
-
-  bool has_partial_match_buffer_size() const
-  {
-    return partial_match_buffer_size != 0;
-  }
-
-  ulonglong get_partial_match_buffer_size() const
-  {
-    return partial_match_buffer_size;
-  }
-
-  void set_partial_match_buffer_size(longlong sz)
-  {
-    partial_match_buffer_size= sz;
-  }
-
-  size_t get_partial_match_arrays_count() const
-  {
-    return partial_match_array_sizes.elements();
-  }
-
-  ha_rows get_partial_match_array_size(size_t idx) const
-  {
-    return partial_match_array_sizes[idx];
-  }
-
-  void increment_loops_count()
-  {
-    loops_count++;
-  }
-
-  bool has_loops_count()
-  {
-    return loops_count != 0;
-  }
-
-  ulonglong get_loops_count() const
-  {
-    return loops_count;
-  }
-
-  void increment_index_lookup_loops()
-  {
-    index_lookups_count++;
-  }
-
-  bool has_index_lookup_loops()
-  {
-    return index_lookups_count != 0;
-  }
-
-  ulonglong get_index_lookup_loops_count() const
-  {
-    return index_lookups_count;
-  }
-
-  void increment_partial_matches()
-  {
-    partial_matches_count++;
-  }
-
-  bool has_partial_matches()
-  {
-    return partial_matches_count != 0;
-  }
-
-  ulonglong get_partial_matches_count() const
-  {
-    return partial_matches_count;
-  }
-
-private:
-  Strategy exec_strategy;
-  ulonglong partial_match_buffer_size;
-  Dynamic_array<ha_rows> partial_match_array_sizes;
-  ulonglong loops_count;
-  ulonglong index_lookups_count;
-  ulonglong partial_matches_count;
 };
 
 #endif /* ITEM_SUBSELECT_INCLUDED */

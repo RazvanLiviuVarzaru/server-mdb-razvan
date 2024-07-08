@@ -2717,33 +2717,34 @@ void Explain_subq_materialization::print_explain_json(Json_writer *writer,
 {
   writer->add_member("materialization").start_object();
   if (is_analyze)
+    tracker.print_json_members(writer);
+}
+
+
+void Subq_materialization_tracker::print_json_members(Json_writer *writer) const
+{
+  writer->add_member("r_strategy").add_str(get_exec_strategy());
+  if (loops_count)
+    writer->add_member("r_loops").add_ull(loops_count);
+
+  if (index_lookups_count)
+    writer->add_member("r_index_lookups").add_ull(index_lookups_count);
+
+  if (partial_matches_count)
+    writer->add_member("r_partial_matches").add_ull(partial_matches_count);
+
+  if (partial_match_buffer_size)
   {
-    writer->add_member("r_strategy").add_str(tracker.get_exec_strategy());
-    if (tracker.has_loops_count())
-    {
-      writer->add_member("r_loops").add_ull(tracker.get_loops_count());
-    }
-    if (tracker.has_index_lookup_loops())
-    {
-      writer->add_member("r_index_lookups").add_ull(
-            tracker.get_index_lookup_loops_count());
-    }
-    if (tracker.has_partial_matches())
-    {
-      writer->add_member("r_partial_matches").add_ull(
-            tracker.get_partial_matches_count());
-    }
-    if (tracker.has_partial_match_buffer_size())
-    {
-      writer->add_member("r_partial_match_buffer_size").add_size(
-            tracker.get_partial_match_buffer_size());
-    }
-    if (tracker.get_partial_match_arrays_count() > 0)
-    {
-      writer->add_member("r_partial_match_array_sizes").start_array();
-      for(size_t i= 0; i < tracker.get_partial_match_arrays_count(); i++)
-        writer->add_ull(tracker.get_partial_match_array_size(i));
-      writer->end_array();
-    }
+    writer->add_member("r_partial_match_buffer_size").
+            add_size(partial_match_buffer_size);
+  }
+
+  if (partial_match_array_sizes.elements())
+  {
+    writer->add_member("r_partial_match_array_sizes").start_array();
+    for(size_t i= 0; i < partial_match_array_sizes.elements(); i++)
+      writer->add_ull(partial_match_array_sizes[i]);
+    writer->end_array();
   }
 }
+

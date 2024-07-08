@@ -117,8 +117,8 @@ public:
   Expression_cache_tracker* cache_tracker;
 
   /**
-    This member is not NULL if the node explains a materialized subquery.
-    Otherwise it is NULL and not used
+    If not NULL, this node is a SELECT (or UNION) in a materialized
+    IN-subquery.
   */
   Explain_subq_materialization* subq_materialization;
 
@@ -1013,7 +1013,10 @@ public:
 
 
 /*
-  EXPLAIN data structure for subquery materialization
+  EXPLAIN data structure for subquery materialization.
+
+  All decisions are made at execution time so here we just store the tracker
+  that has all the info.
 */
 
 class Explain_subq_materialization : public Sql_alloc

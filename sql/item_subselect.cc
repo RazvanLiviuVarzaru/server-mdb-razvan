@@ -5029,7 +5029,7 @@ subselect_hash_sj_engine::choose_partial_match_strategy(
       strategy= PARTIAL_MATCH_SCAN;
     else
       item->get_IN_subquery()->get_materialization_tracker()->
-          set_partial_match_buffer_size(pm_buff_size);
+          report_partial_match_buffer_size(pm_buff_size);
   }
 }
 
@@ -5805,7 +5805,7 @@ int subselect_hash_sj_engine::exec()
     }
   }
 
-  item_in->get_materialization_tracker()->set_exec_strategy(strategy);
+  item_in->get_materialization_tracker()->report_exec_strategy(strategy);
   if (pm_engine)
     lookup_engine= pm_engine;
   item_in->change_engine(lookup_engine);
@@ -6292,7 +6292,7 @@ int subselect_partial_match_engine::exec()
     else
     {
       /* Search for a complete match. */
-      tracker->increment_index_lookup_loops();
+      tracker->increment_index_lookups();
       if ((lookup_res= lookup_engine->index_lookup()))
       {
         /* An error occurred during lookup(). */
@@ -6545,7 +6545,7 @@ subselect_rowid_merge_engine::init(MY_BITMAP *non_null_key_parts,
     return TRUE;
 
   item->get_IN_subquery()->get_materialization_tracker()->
-      track_partial_merge_keys(merge_keys, merge_keys_count);
+      report_partial_merge_keys(merge_keys, merge_keys_count);
   return FALSE;
 }
 
@@ -7004,7 +7004,7 @@ void Item_subselect::init_expr_cache_tracker(THD *thd)
 }
 
 
-void Subq_materialization_tracker::track_partial_merge_keys(
+void Subq_materialization_tracker::report_partial_merge_keys(
     Ordered_key **merge_keys, uint merge_keys_count)
 {
   partial_match_array_sizes.resize(merge_keys_count, 0);
