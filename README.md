@@ -4,7 +4,7 @@
 
 ## MariaDB: The innovative open source database. Trigger 11.4 vanilla builds for RPM (packages).
 
-MariaDB was designed as a drop-in replacement of MySQL(R) with more
+MariaDB was designed as a drop-in replacement of MySQL(R) with more Test CI
 features, new storage engines, fewer bugs, and better performance.
 
 MariaDB is brought to you by the MariaDB Foundation and the MariaDB Corporation.
