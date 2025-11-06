@@ -254,6 +254,10 @@ static void print_version(void)
    MYSQL_SERVER_VERSION, SYSTEM_TYPE, MACHINE_TYPE);
 } /* print_version */
 
+int wolololo_test_div_zero(int x) {
+    int y = 0;
+    return x / y;  // <-- Infer: division by zero
+}
 
 static void usage(void)
 {
