@@ -7,6 +7,8 @@
 MariaDB was designed as a drop-in replacement of MySQL(R) with more
 features, new storage engines, fewer bugs, and better performance.
 
+# test trigger CI
+
 MariaDB is brought to you by the MariaDB Foundation and the MariaDB Corporation.
 Please read the CREDITS file for details about the MariaDB Foundation,
 and who is developing MariaDB.
