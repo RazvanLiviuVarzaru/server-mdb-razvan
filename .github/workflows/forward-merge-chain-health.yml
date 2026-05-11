@@ -1,0 +1,24 @@
+name: Forward merge chain health
+
+on:
+  # schedule:
+  #   - cron: "*/30 * * * *"
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  chain-health:
+    uses: RazvanLiviuVarzaru/forward-branch-merge-check/.github/workflows/forward-merge-chain-health.yml@main
+    with:
+      tool_repository: RazvanLiviuVarzaru/forward-branch-merge-check
+      tool_ref: main
+      config_path: .github/forward-merge-check/forward-merge-chain.yml
+      state_cache_key: forward-merge-chain-state
+    secrets:
+      tool_repository_token: ${{ secrets.FORWARD_MERGE_CHECK_TOKEN }}
+      slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+      zulip_webhook_url: ${{ secrets.ZULIP_WEBHOOK_URL }}
+
