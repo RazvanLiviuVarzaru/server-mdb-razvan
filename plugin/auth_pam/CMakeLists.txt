@@ -49,7 +49,7 @@ IF(HAVE_PAM_APPL_H AND HAVE_GETGROUPLIST)
       SET(user "%{mysqld_user}")
     ENDIF()
     SET(CPACK_RPM_server_USER_FILELIST ${CPACK_RPM_server_USER_FILELIST}
-        "%attr(700,${user},-) ${INSTALL_PLUGINDIRABS}/auth_pam_tool_dir"
+        "%dir %attr(700,${user},-) ${INSTALL_PLUGINDIRABS}/auth_pam_tool_dir"
         "%attr(4755,root,-) ${INSTALL_PLUGINDIRABS}/auth_pam_tool_dir/auth_pam_tool")
     SET(CPACK_RPM_server_USER_FILELIST ${CPACK_RPM_server_USER_FILELIST} PARENT_SCOPE)
   ENDIF()
